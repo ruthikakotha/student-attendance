@@ -1,5 +1,6 @@
 const API_URL = (
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"
+    import.meta.env.VITE_API_BASE_URL ||
+    "https://student-attendance-production-3786.up.railway.app/api"
 ).replace(/\/+$/, "");
 
 const getHeaders = (json = false) => {
@@ -12,12 +13,10 @@ const getHeaders = (json = false) => {
 };
 
 // STUDENTS
-
 export const getStudents = async () => {
     const response = await fetch(`${API_URL}/students`, {
         headers: getHeaders()
     });
-
     if (!response.ok) throw new Error("Failed to fetch students");
     return response.json();
 };
@@ -28,7 +27,6 @@ export const addStudent = async (student) => {
         headers: getHeaders(true),
         body: JSON.stringify(student)
     });
-
     if (!response.ok) throw new Error("Failed to add student");
     return response.json();
 };
@@ -39,7 +37,6 @@ export const updateStudent = async (id, student) => {
         headers: getHeaders(true),
         body: JSON.stringify(student)
     });
-
     if (!response.ok) throw new Error("Failed to update student");
     return response.json();
 };
@@ -49,17 +46,14 @@ export const deleteStudent = async (id) => {
         method: "DELETE",
         headers: getHeaders()
     });
-
     if (!response.ok) throw new Error("Failed to delete student");
 };
 
 // ATTENDANCE
-
 export const getAttendance = async () => {
     const response = await fetch(`${API_URL}/attendance`, {
         headers: getHeaders()
     });
-
     if (!response.ok) throw new Error("Failed to fetch attendance");
     return response.json();
 };
@@ -70,11 +64,9 @@ export const getAttendanceByDateAndSubject = async (date, subject) => {
         `${API_URL}/attendance/date-subject?${params}`,
         { headers: getHeaders() }
     );
-
     if (!response.ok) {
         throw new Error("Failed to fetch attendance for selected date and subject");
     }
-
     return response.json();
 };
 
@@ -97,7 +89,6 @@ export const getAttendanceSession = async (session) => {
     if (!response.ok) {
         throw new Error("Failed to load the selected class session");
     }
-
     return response.json();
 };
 
@@ -112,7 +103,6 @@ export const saveAttendanceSession = async (session) => {
         const message = await response.text();
         throw new Error(message || "Failed to save attendance session");
     }
-
     return response.json();
 };
 
@@ -125,7 +115,6 @@ export const getAttendanceByStudent = async (studentId) => {
     if (!response.ok) {
         throw new Error("Failed to fetch student attendance");
     }
-
     return response.json();
 };
 
