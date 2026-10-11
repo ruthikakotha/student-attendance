@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useTheme } from "../theme";
 
 const API_URL = (
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"
+    import.meta.env.VITE_API_BASE_URL ||
+    "https://student-attendance-production-3786.up.railway.app/api"
 ).replace(/\/+$/, "");
 
 function Login() {
@@ -50,10 +51,7 @@ function Login() {
             sessionStorage.setItem("role", data.role);
 
             if (role === "student") {
-                sessionStorage.setItem(
-                    "student",
-                    JSON.stringify(data)
-                );
+                sessionStorage.setItem("student", JSON.stringify(data));
                 navigate("/student-dashboard");
             } else {
                 navigate("/dashboard");
@@ -78,7 +76,6 @@ function Login() {
 
             <form onSubmit={handleLogin} className="login-card">
                 <h1>Student Attendance</h1>
-
                 <p className="login-subtitle">
                     Attendance Management System
                 </p>
@@ -124,9 +121,7 @@ function Login() {
                 <input
                     type="text"
                     placeholder={
-                        role === "teacher"
-                            ? "Username"
-                            : "Student Roll Number"
+                        role === "teacher" ? "Username" : "Student Roll Number"
                     }
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
@@ -140,9 +135,7 @@ function Login() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    autoComplete={
-                        role === "teacher" ? "current-password" : "current-password"
-                    }
+                    autoComplete="current-password"
                 />
 
                 <button type="submit" disabled={loading}>
