@@ -21,13 +21,12 @@ function Login() {
         setLoading(true);
 
         try {
-            const endpoint =
-                role === "teacher" ? "teacher-login" : "student-login";
+            const isTeacher = role === "teacher";
+            const endpoint = isTeacher ? "teacher-login" : "student-login";
 
-            const body =
-                role === "teacher"
-                    ? { username: username.trim(), password }
-                    : { rollNo: username.trim(), password };
+            const body = isTeacher
+                ? { username: username.trim(), password }
+                : { rollNo: username.trim(), password };
 
             const response = await fetch(`${API_URL}/${endpoint}`, {
                 method: "POST",
@@ -44,33 +43,25 @@ function Login() {
                 return;
             }
 
-            // Teacher login requires a JWT token.
-            if (role === "teacher") {
-                if (!data.token) {
-                    alert("Teacher login failed: authentication token missing.");
-                    return;
-                }
-
-                sessionStorage.setItem("token", data.token);
-                sessionStorage.setItem("role", data.role || "teacher");
-
-                navigate("/dashboard");
+            if (!data.token) {
+                alert("Login failed: authentication token missing.");
                 return;
             }
 
-            // Student login
-            // Store the student details returned by the backend.
-            sessionStorage.setItem("role", "student");
-            sessionStorage.setItem("student", JSON.stringify(data));
+            // Save the backend's actual role and token.
+            sessionStorage.setItem("token", data.token);
+            sessionStorage.setItem(
+                "role",
+                String(data.role || (isTeacher ? "TEACHER" : "STUDENT")).toUpperCase()
+            );
 
-            // Store a token only if the backend returns one.
-            if (data.token) {
-                sessionStorage.setItem("token", data.token);
+            if (isTeacher) {
+                sessionStorage.removeItem("student");
+                navigate("/dashboard", { replace: true });
             } else {
-                sessionStorage.removeItem("token");
+                sessionStorage.setItem("student", JSON.stringify(data));
+                navigate("/student-dashboard", { replace: true });
             }
-
-            navigate("/student-dashboard");
         } catch (error) {
             console.error("Login error:", error);
             alert("Unable to connect to the server. Please try again.");
