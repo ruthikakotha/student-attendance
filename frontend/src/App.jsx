@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import {
+    HashRouter,
+    Routes,
+    Route,
+    Navigate,
+} from "react-router-dom";
+
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
@@ -14,21 +20,39 @@ function App() {
         const savedTheme = localStorage.getItem("attendance-theme");
         return savedTheme === "dark" ? "dark" : "light";
     });
+
     useEffect(() => {
         document.documentElement.dataset.theme = theme;
         localStorage.setItem("attendance-theme", theme);
     }, [theme]);
+
     const toggleTheme = () => {
-        setTheme((current) => current === "light" ? "dark" : "light");
+        setTheme((current) =>
+            current === "light" ? "dark" : "light"
+        );
     };
-    return <ThemeContext.Provider value={{ theme, toggleTheme }}><BrowserRouter><Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/students" element={<Students />} />
-        <Route path="/attendance" element={<Attendance />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/student-dashboard" element={<StudentDashboard />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes></BrowserRouter></ThemeContext.Provider>;
+
+    return (
+        <ThemeContext.Provider value={{ theme, toggleTheme }}>
+            <HashRouter>
+                <Routes>
+                    <Route path="/" element={<Login />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/students" element={<Students />} />
+                    <Route path="/attendance" element={<Attendance />} />
+                    <Route path="/reports" element={<Reports />} />
+                    <Route
+                        path="/student-dashboard"
+                        element={<StudentDashboard />}
+                    />
+                    <Route
+                        path="*"
+                        element={<Navigate to="/" replace />}
+                    />
+                </Routes>
+            </HashRouter>
+        </ThemeContext.Provider>
+    );
 }
+
 export default App;
