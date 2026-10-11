@@ -1,0 +1,48 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Spring Boot backend
+backend/target/
+backend/.classpath
+backend/.project
+backend/.settings/
+
+# Local configuration
+backend/src/main/resources/application-local.properties
+backend/src/main/resources/application-secret.properties
+
+# React / Vite frontend
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Database backups
+*.sql
+*.sql.gz
+*.dump
+*.bak
+
+# Temporary files
+*.tmp
+*.temp
