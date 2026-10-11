@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useTheme } from "../theme";
 
 const API_URL = (
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"
+    import.meta.env.VITE_API_BASE_URL ||
+    "https://student-attendance-production-3786.up.railway.app/api"
 ).replace(/\/+$/, "");
 
 function StudentDashboard() {
@@ -13,15 +14,16 @@ function StudentDashboard() {
     const [student, setStudent] = useState(null);
     const [attendance, setAttendance] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
     useEffect(() => {
-        const token = sessionStorage.getItem("token");
         const role = sessionStorage.getItem("role");
         const storedStudent = sessionStorage.getItem("student");
+        const token = sessionStorage.getItem("token");
 
-        if (!token || role !== "STUDENT" || !storedStudent) {
-            sessionStorage.clear();
-            navigate("/", { replace: true });
+        if (role?.toUpperCase() !== "STUDENT" || !storedStudent || !token) {
+            setError("Your student session is missing. Please log in again.");
+            setLoading(false);
             return;
         }
 
@@ -31,13 +33,13 @@ function StudentDashboard() {
             currentStudent = JSON.parse(storedStudent);
 
             if (!currentStudent?.id) {
-                sessionStorage.clear();
-                navigate("/", { replace: true });
+                setError("Student details are missing. Please log in again.");
+                setLoading(false);
                 return;
             }
         } catch {
-            sessionStorage.clear();
-            navigate("/", { replace: true });
+            setError("Unable to read student details. Please log in again.");
+            setLoading(false);
             return;
         }
 
@@ -54,39 +56,47 @@ function StudentDashboard() {
                     }
                 );
 
-                if (response.status === 401 || response.status === 403) {
-                    sessionStorage.clear();
-                    navigate("/", { replace: true });
-                    return;
-                }
-
                 if (!response.ok) {
-                    throw new Error("Failed to load attendance");
+                    throw new Error(
+                        `Unable to load attendance (HTTP ${response.status}).`
+                    );
                 }
 
                 const data = await response.json();
                 setAttendance(Array.isArray(data) ? data : []);
-            } catch (error) {
-                console.error("Attendance loading error:", error);
-                alert("Unable to load your attendance.");
+            } catch (err) {
+                console.error("Attendance loading error:", err);
+                setError(err.message || "Unable to load attendance.");
             } finally {
                 setLoading(false);
             }
         };
 
         loadAttendance();
-    }, [navigate]);
+    }, []);
 
     const handleLogout = () => {
-        sessionStorage.clear();
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("role");
+        sessionStorage.removeItem("student");
         navigate("/", { replace: true });
     };
 
-    if (!student || loading) {
+    if (loading) {
         return (
             <div className="page">
                 <h1>Student Dashboard</h1>
                 <p>Loading your dashboard...</p>
+            </div>
+        );
+    }
+
+    if (!student) {
+        return (
+            <div className="page">
+                <h1>Student Dashboard</h1>
+                <p>{error || "Student details are unavailable."}</p>
+                <button onClick={handleLogout}>Back to Login</button>
             </div>
         );
     }
@@ -101,28 +111,24 @@ function StudentDashboard() {
 
     const total = presentCount + absentCount;
 
-    const percentage = total > 0
+    const percentage = total
         ? Math.round((presentCount / total) * 100)
         : 0;
 
     const subjects = {};
 
     attendance.forEach(item => {
-        const originalSubject = item.subject?.trim() || "Other";
-        const subjectKey = originalSubject.toLowerCase();
+        const name = item.subject?.trim() || "Other";
+        const key = name.toLowerCase();
 
-        if (!subjects[subjectKey]) {
-            subjects[subjectKey] = {
-                name: originalSubject,
-                present: 0,
-                absent: 0,
-            };
+        if (!subjects[key]) {
+            subjects[key] = { name, present: 0, absent: 0 };
         }
 
         if (item.status?.toLowerCase() === "present") {
-            subjects[subjectKey].present++;
+            subjects[key].present++;
         } else if (item.status?.toLowerCase() === "absent") {
-            subjects[subjectKey].absent++;
+            subjects[key].absent++;
         }
     });
 
@@ -136,7 +142,6 @@ function StudentDashboard() {
                         type="button"
                         className="theme-toggle"
                         onClick={toggleTheme}
-                        aria-label="Toggle color theme"
                     >
                         {theme === "light" ? "☾ Dark mode" : "☀ Light mode"}
                     </button>
@@ -165,21 +170,24 @@ function StudentDashboard() {
                         <h1>Welcome, {student.name}!</h1>
                         <p>Here is your attendance summary.</p>
                     </div>
-
                     <span className="portal-label">Student portal</span>
                 </div>
+
+                {error && (
+                    <div role="alert" className="error-message">
+                        {error}
+                    </div>
+                )}
 
                 <div className="dashboard-cards student-details">
                     <div className="dashboard-card">
                         <h3>Roll Number</h3>
                         <h2>{student.rollNo}</h2>
                     </div>
-
                     <div className="dashboard-card">
                         <h3>Department</h3>
                         <h2>{student.department}</h2>
                     </div>
-
                     <div className="dashboard-card">
                         <h3>Year &amp; Section</h3>
                         <h2>{student.year} / {student.section}</h2>
@@ -196,26 +204,22 @@ function StudentDashboard() {
                             <h2>{total}</h2>
                         </div>
                     </div>
-
                     <div className="stat-card present-card">
                         <div>
                             <p>Present</p>
                             <h2>{presentCount}</h2>
                         </div>
                     </div>
-
                     <div className="stat-card absent-card">
                         <div>
                             <p>Absent</p>
                             <h2>{absentCount}</h2>
                         </div>
                     </div>
-
                     <div className="stat-card percentage-card">
                         <div>
                             <p>Attendance</p>
                             <h2>{percentage}%</h2>
-
                             <div
                                 className="progress-track"
                                 role="progressbar"
@@ -248,7 +252,6 @@ function StudentDashboard() {
                                 <th>Percentage</th>
                             </tr>
                         </thead>
-
                         <tbody>
                             {Object.keys(subjects).length === 0 ? (
                                 <tr>
@@ -257,40 +260,35 @@ function StudentDashboard() {
                                     </td>
                                 </tr>
                             ) : (
-                                Object.entries(subjects).map(
-                                    ([subjectKey, data]) => {
-                                        const subjectTotal =
-                                            data.present + data.absent;
+                                Object.entries(subjects).map(([key, data]) => {
+                                    const subjectTotal =
+                                        data.present + data.absent;
 
-                                        const subjectPercentage =
-                                            subjectTotal > 0
-                                                ? Math.round(
-                                                    (data.present / subjectTotal) * 100
-                                                )
-                                                : 0;
+                                    const subjectPercentage = subjectTotal
+                                        ? Math.round(
+                                            (data.present / subjectTotal) * 100
+                                        )
+                                        : 0;
 
-                                        return (
-                                            <tr key={subjectKey}>
-                                                <td>{data.name}</td>
-                                                <td>{data.present}</td>
-                                                <td>{data.absent}</td>
-                                                <td>{subjectTotal}</td>
-                                                <td>
-                                                    <div>
-                                                        {subjectPercentage}%
-                                                    </div>
-                                                    <div className="subject-progress">
-                                                        <span
-                                                            style={{
-                                                                width: `${subjectPercentage}%`,
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    }
-                                )
+                                    return (
+                                        <tr key={key}>
+                                            <td>{data.name}</td>
+                                            <td>{data.present}</td>
+                                            <td>{data.absent}</td>
+                                            <td>{subjectTotal}</td>
+                                            <td>
+                                                {subjectPercentage}%
+                                                <div className="subject-progress">
+                                                    <span
+                                                        style={{
+                                                            width: `${subjectPercentage}%`,
+                                                        }}
+                                                    />
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>
