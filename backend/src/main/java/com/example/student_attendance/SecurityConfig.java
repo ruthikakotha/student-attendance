@@ -43,24 +43,21 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Public login endpoints
                         .requestMatchers(HttpMethod.POST,
                                 "/api/student-login",
                                 "/api/teacher-login")
                         .permitAll()
 
-                        // Students may access their attendance endpoint.
-                        // The controller must also verify the student ID.
                         .requestMatchers(HttpMethod.GET,
                                 "/api/attendance/student/**")
-                        .hasRole("STUDENT")
+                        .hasAnyRole("STUDENT", "TEACHER")
 
-                        // All student management and remaining attendance APIs
-                        // are reserved for teachers.
-                        .requestMatchers("/api/students/**").hasRole("TEACHER")
-                        .requestMatchers("/api/attendance/**").hasRole("TEACHER")
+                        .requestMatchers("/api/students/**")
+                        .hasRole("TEACHER")
 
-                        // Deny every other API unless explicitly permitted
+                        .requestMatchers("/api/attendance/**")
+                        .hasRole("TEACHER")
+
                         .requestMatchers("/api/**").denyAll()
                         .anyRequest().denyAll())
                 .addFilterBefore(
@@ -76,7 +73,8 @@ public class SecurityConfig {
 
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
-                "http://127.0.0.1:5173"));
+                "http://127.0.0.1:5173",
+                "https://ruthikakotha.github.io"));
 
         config.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS"));
