@@ -1,6 +1,6 @@
 const API_URL = (
     import.meta.env.VITE_API_BASE_URL ||
-    "http://localhost:8080/api"
+    "https://student-attendance-production-3786.up.railway.app/api"
 ).replace(/\/+$/, "");
 
 const getHeaders = (json = false) => {
