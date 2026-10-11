@@ -17,39 +17,47 @@ function Login() {
 
     const handleLogin = async (e) => {
         e.preventDefault();
-
-        if (role === "teacher") {
-            if (username === "admin" && password === "admin123") {
-                navigate("/dashboard");
-            } else {
-                alert("Invalid teacher username or password");
-            }
-            return;
-        }
-
         setLoading(true);
 
         try {
-            const response = await fetch(`${API_URL}/student-login`, {
+            const endpoint =
+                role === "teacher" ? "teacher-login" : "student-login";
+
+            const body =
+                role === "teacher"
+                    ? { username: username.trim(), password }
+                    : { rollNo: username.trim(), password };
+
+            const response = await fetch(`${API_URL}/${endpoint}`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    rollNo: username.trim(),
-                    password,
-                }),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
             });
 
             const data = await response.json();
 
             if (!response.ok) {
-                alert(data.message || "Invalid student credentials");
+                alert(data.message || "Invalid login credentials");
                 return;
             }
 
-            sessionStorage.setItem("student", JSON.stringify(data));
-            navigate("/student-dashboard");
+            if (!data.token) {
+                alert("Login failed: authentication token was not returned.");
+                return;
+            }
+
+            sessionStorage.setItem("token", data.token);
+            sessionStorage.setItem("role", data.role);
+
+            if (role === "student") {
+                sessionStorage.setItem(
+                    "student",
+                    JSON.stringify(data)
+                );
+                navigate("/student-dashboard");
+            } else {
+                navigate("/dashboard");
+            }
         } catch (error) {
             console.error("Login error:", error);
             alert("Unable to connect to the server.");
@@ -65,7 +73,7 @@ function Login() {
                 className="theme-toggle login-theme"
                 onClick={toggleTheme}
             >
-                {theme === "light" ? "☾ Dark mode" : "☀ Light mode"}
+                {theme === "light" ? "Dark mode" : "Light mode"}
             </button>
 
             <form onSubmit={handleLogin} className="login-card">
@@ -123,6 +131,7 @@ function Login() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
+                    autoComplete="username"
                 />
 
                 <input
@@ -131,6 +140,9 @@ function Login() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    autoComplete={
+                        role === "teacher" ? "current-password" : "current-password"
+                    }
                 />
 
                 <button type="submit" disabled={loading}>

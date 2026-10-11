@@ -15,9 +15,12 @@ function StudentDashboard() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        const token = sessionStorage.getItem("token");
+        const role = sessionStorage.getItem("role");
         const storedStudent = sessionStorage.getItem("student");
 
-        if (!storedStudent) {
+        if (!token || role !== "STUDENT" || !storedStudent) {
+            sessionStorage.clear();
             navigate("/", { replace: true });
             return;
         }
@@ -28,12 +31,12 @@ function StudentDashboard() {
             currentStudent = JSON.parse(storedStudent);
 
             if (!currentStudent?.id) {
-                sessionStorage.removeItem("student");
+                sessionStorage.clear();
                 navigate("/", { replace: true });
                 return;
             }
         } catch {
-            sessionStorage.removeItem("student");
+            sessionStorage.clear();
             navigate("/", { replace: true });
             return;
         }
@@ -43,8 +46,19 @@ function StudentDashboard() {
         const loadAttendance = async () => {
             try {
                 const response = await fetch(
-                    `${API_URL}/attendance/student/${currentStudent.id}`
+                    `${API_URL}/attendance/student/${currentStudent.id}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
                 );
+
+                if (response.status === 401 || response.status === 403) {
+                    sessionStorage.clear();
+                    navigate("/", { replace: true });
+                    return;
+                }
 
                 if (!response.ok) {
                     throw new Error("Failed to load attendance");
@@ -64,7 +78,7 @@ function StudentDashboard() {
     }, [navigate]);
 
     const handleLogout = () => {
-        sessionStorage.removeItem("student");
+        sessionStorage.clear();
         navigate("/", { replace: true });
     };
 
@@ -91,7 +105,6 @@ function StudentDashboard() {
         ? Math.round((presentCount / total) * 100)
         : 0;
 
-    // Combine subject names regardless of capitalization.
     const subjects = {};
 
     attendance.forEach(item => {
@@ -102,7 +115,7 @@ function StudentDashboard() {
             subjects[subjectKey] = {
                 name: originalSubject,
                 present: 0,
-                absent: 0
+                absent: 0,
             };
         }
 
@@ -116,9 +129,7 @@ function StudentDashboard() {
     return (
         <>
             <nav className="navbar">
-                <div className="navbar-title">
-                    Student Portal
-                </div>
+                <div className="navbar-title">Student Portal</div>
 
                 <div className="student-nav-actions">
                     <button
@@ -140,7 +151,7 @@ function StudentDashboard() {
                             background: "transparent",
                             color: "white",
                             fontWeight: "bold",
-                            cursor: "pointer"
+                            cursor: "pointer",
                         }}
                     >
                         Logout
@@ -265,11 +276,13 @@ function StudentDashboard() {
                                                 <td>{data.absent}</td>
                                                 <td>{subjectTotal}</td>
                                                 <td>
-                                                    <div>{subjectPercentage}%</div>
+                                                    <div>
+                                                        {subjectPercentage}%
+                                                    </div>
                                                     <div className="subject-progress">
                                                         <span
                                                             style={{
-                                                                width: `${subjectPercentage}%`
+                                                                width: `${subjectPercentage}%`,
                                                             }}
                                                         />
                                                     </div>
