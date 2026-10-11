@@ -31,7 +31,9 @@ function Login() {
 
             const response = await fetch(`${API_URL}/${endpoint}`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                },
                 body: JSON.stringify(body),
             });
 
@@ -42,23 +44,36 @@ function Login() {
                 return;
             }
 
-            if (!data.token) {
-                alert("Login failed: authentication token was not returned.");
+            // Teacher login requires a JWT token.
+            if (role === "teacher") {
+                if (!data.token) {
+                    alert("Teacher login failed: authentication token missing.");
+                    return;
+                }
+
+                sessionStorage.setItem("token", data.token);
+                sessionStorage.setItem("role", data.role || "teacher");
+
+                navigate("/dashboard");
                 return;
             }
 
-            sessionStorage.setItem("token", data.token);
-            sessionStorage.setItem("role", data.role);
+            // Student login
+            // Store the student details returned by the backend.
+            sessionStorage.setItem("role", "student");
+            sessionStorage.setItem("student", JSON.stringify(data));
 
-            if (role === "student") {
-                sessionStorage.setItem("student", JSON.stringify(data));
-                navigate("/student-dashboard");
+            // Store a token only if the backend returns one.
+            if (data.token) {
+                sessionStorage.setItem("token", data.token);
             } else {
-                navigate("/dashboard");
+                sessionStorage.removeItem("token");
             }
+
+            navigate("/student-dashboard");
         } catch (error) {
             console.error("Login error:", error);
-            alert("Unable to connect to the server.");
+            alert("Unable to connect to the server. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -76,6 +91,7 @@ function Login() {
 
             <form onSubmit={handleLogin} className="login-card">
                 <h1>Student Attendance</h1>
+
                 <p className="login-subtitle">
                     Attendance Management System
                 </p>
@@ -121,7 +137,9 @@ function Login() {
                 <input
                     type="text"
                     placeholder={
-                        role === "teacher" ? "Username" : "Student Roll Number"
+                        role === "teacher"
+                            ? "Username"
+                            : "Student Roll Number"
                     }
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
